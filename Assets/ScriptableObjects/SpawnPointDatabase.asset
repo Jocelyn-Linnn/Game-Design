@@ -16,15 +16,15 @@ MonoBehaviour:
   - spawnPointId: default_spawn
     displayName: Starting Point
     locationDescription: Default starting location
-    position: {x: -7.35, y: -4.21, z: 0}
+    position: {x: -7.35, y: -4.32, z: 0}
     sceneName: MainScene
     isOneTimeUse: 0
-    isTransportable: 1
-    isActive: 0
+    isTransportable: 0
+    isActive: 1
     isChairSpawn: 0
     activeVisual: {fileID: 0}
     activationSound: {fileID: 0}
-    restoresEnergy: 1
+    restoresEnergy: 0
     energyRestoreAmount: 0
   - spawnPointId: third_chair
     displayName: Deep Chasm
@@ -66,17 +66,17 @@ MonoBehaviour:
     restoresEnergy: 1
     energyRestoreAmount: 0
   currentActiveSpawnPoint:
-    spawnPointId: second_chair
-    displayName: Gloom Hollow
-    locationDescription: 
-    position: {x: 41.359406, y: -29.208239, z: 0}
+    spawnPointId: default_spawn
+    displayName: Starting Point
+    locationDescription: Default starting location
+    position: {x: -7.35, y: -4.32, z: 0}
     sceneName: MainScene
     isOneTimeUse: 0
-    isTransportable: 1
+    isTransportable: 0
     isActive: 1
-    isChairSpawn: 1
+    isChairSpawn: 0
     activeVisual: {fileID: 0}
     activationSound: {fileID: 0}
-    restoresEnergy: 1
+    restoresEnergy: 0
     energyRestoreAmount: 0
   autoSave: 1

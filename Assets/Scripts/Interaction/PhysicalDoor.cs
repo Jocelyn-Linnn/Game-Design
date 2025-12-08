@@ -1,10 +1,12 @@
 using UnityEngine;
+using UnityEngine.Video;
 using System.Collections;
 
 /// <summary>
 /// 實體門腳本 - 有碰撞的門，需要鑰匙才能開啟
 /// 當玩家碰撞到門時，如果有正確的鑰匙，會在背包鑰匙物件上方顯示按鍵提示
 /// 玩家按下 Z 鍵可以使用鑰匙開門
+/// 開門後會播放白光閃爍效果，接著播放影片
 /// </summary>
 public class PhysicalDoor : MonoBehaviour
 {
@@ -40,6 +42,19 @@ public class PhysicalDoor : MonoBehaviour
     [Header("視覺效果")]
     [Tooltip("門開啟時的粒子效果")]
     public GameObject openEffect;
+    
+    [Header("白光與影片設置")]
+    [Tooltip("是否在開門後播放白光閃爍效果")]
+    public bool enableWhiteFlash = true;
+    
+    [Tooltip("白光持續時間（秒）")]
+    public float flashDuration = 1f;
+    
+    [Tooltip("是否在白光後播放影片")]
+    public bool enableVideoPlayback = true;
+    
+    [Tooltip("要播放的影片檔案")]
+    public VideoClip videoClip;
     
     private bool isOpened = false;
     private bool isAnimating = false;
@@ -353,6 +368,82 @@ public class PhysicalDoor : MonoBehaviour
         isAnimating = false;
         
         Debug.Log("門已完全開啟！");
+        
+        // 播放白光閃爍效果和影片
+        if (enableWhiteFlash || enableVideoPlayback)
+        {
+            StartCoroutine(PlayFlashAndVideo());
+        }
+    }
+    
+    /// <summary>
+    /// 播放白光閃爍和影片的協程
+    /// </summary>
+    private IEnumerator PlayFlashAndVideo()
+    {
+        // 1. 播放白光閃爍效果
+        if (enableWhiteFlash)
+        {
+            WhiteFlashEffect flashEffect = WhiteFlashEffect.GetInstance();
+            
+            if (flashEffect != null)
+            {
+                Debug.Log("PhysicalDoor: 開始播放白光閃爍效果");
+                
+                bool flashCompleted = false;
+                flashEffect.PlayFlash(flashDuration, 0.1f, 0.3f, () => 
+                {
+                    flashCompleted = true;
+                });
+                
+                // 等待白光效果完成
+                while (!flashCompleted)
+                {
+                    yield return null;
+                }
+                
+                Debug.Log("PhysicalDoor: 白光閃爍效果完成");
+            }
+            else
+            {
+                Debug.LogWarning("PhysicalDoor: 找不到 WhiteFlashEffect 實例！");
+                // 如果找不到白光效果，等待指定的時間
+                yield return new WaitForSeconds(flashDuration);
+            }
+        }
+        
+        // 2. 播放影片
+        if (enableVideoPlayback && videoClip != null)
+        {
+            VideoPlayerController videoController = VideoPlayerController.GetInstance();
+            
+            if (videoController != null)
+            {
+                Debug.Log("PhysicalDoor: 開始播放影片");
+                
+                bool videoCompleted = false;
+                videoController.PlayVideo(videoClip, () => 
+                {
+                    videoCompleted = true;
+                });
+                
+                // 等待影片播放完成
+                while (!videoCompleted)
+                {
+                    yield return null;
+                }
+                
+                Debug.Log("PhysicalDoor: 影片播放完成");
+            }
+            else
+            {
+                Debug.LogWarning("PhysicalDoor: 找不到 VideoPlayerController 實例！");
+            }
+        }
+        else if (enableVideoPlayback && videoClip == null)
+        {
+            Debug.LogWarning("PhysicalDoor: 已啟用影片播放但未設置影片檔案！");
+        }
     }
     
     /// <summary>

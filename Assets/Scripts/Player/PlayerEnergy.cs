@@ -26,6 +26,7 @@ public class PlayerEnergy : MonoBehaviour
 
     [Header("Debug")]
     [SerializeField] private bool showDebugInfo = true;
+    [SerializeField] private bool isInfiniteEnergy = true; // Default to true for "land" phase
 
     private int currentEnergy;
     private bool isRestoring = false;
@@ -71,6 +72,7 @@ public class PlayerEnergy : MonoBehaviour
     /// </summary>
     public bool HasEnergyToJump()
     {
+        if (isInfiniteEnergy) return true;
         return currentEnergy >= jumpCost;
     }
 
@@ -80,6 +82,15 @@ public class PlayerEnergy : MonoBehaviour
     /// <returns>True if energy was consumed, false if not enough energy</returns>
     public bool ConsumeJumpEnergy()
     {
+        if (isInfiniteEnergy)
+        {
+            if (showDebugInfo)
+            {
+                Debug.Log("<color=cyan>PlayerEnergy: Infinite energy active - no energy consumed for jump.</color>");
+            }
+            return true;
+        }
+
         if (!HasEnergyToJump())
         {
             if (showDebugInfo)
@@ -267,6 +278,18 @@ public class PlayerEnergy : MonoBehaviour
         }
 
         OnEnergyChanged?.Invoke(currentEnergy, maxEnergy);
+    }
+
+    /// <summary>
+    /// Enable or disable infinite energy mode
+    /// </summary>
+    public void SetInfiniteEnergy(bool enabled)
+    {
+        isInfiniteEnergy = enabled;
+        if (showDebugInfo)
+        {
+            Debug.Log($"<color=cyan>PlayerEnergy: Infinite energy set to {enabled}</color>");
+        }
     }
 
     /// <summary>

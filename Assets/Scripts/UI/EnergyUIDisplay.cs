@@ -34,6 +34,22 @@ public class EnergyUIDisplay : MonoBehaviour
     private Coroutine[] animCoroutines;
     private int previousEnergy = -1; // Track previous energy to detect which block changed
 
+    public static EnergyUIDisplay Instance { get; private set; }
+
+    void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else
+        {
+            Debug.LogWarning("EnergyUIDisplay: Multiple instances found! Destroying duplicate.");
+            Destroy(gameObject);
+            return;
+        }
+    }
+
     void Start()
     {
         if (energySystem == null)
@@ -49,6 +65,10 @@ public class EnergyUIDisplay : MonoBehaviour
         energySystem.OnEnergyChanged += UpdateEnergyDisplay;
         CreateEnergyBlocks();
         UpdateEnergyDisplay(energySystem.GetCurrentEnergy(), energySystem.GetMaxEnergy());
+
+        // 一開始在陸地上隱藏UI，直到跌落後才顯示
+        gameObject.SetActive(false);
+        Debug.Log("EnergyUIDisplay: UI hidden at game start - will show after pitfall");
     }
 
     void OnDestroy()
@@ -83,6 +103,22 @@ public class EnergyUIDisplay : MonoBehaviour
 
     private void UpdateEnergyDisplay(int current, int max)
     {
+        // If UI is inactive, just update without animation to avoid coroutine errors
+        if (!gameObject.activeSelf)
+        {
+            // Update all blocks instantly without animation
+            for (int i = 0; i < energyBlocks.Length; i++)
+            {
+                if (energyBlocks[i] == null) continue;
+
+                bool shouldBeFull = i < current;
+                energyBlocks[i].color = shouldBeFull ? fullColor : emptyColor;
+                energyBlocks[i].rectTransform.localScale = Vector3.one;
+            }
+            previousEnergy = current;
+            return;
+        }
+
         // First time initialization - set all blocks without animation
         if (previousEnergy == -1)
         {
@@ -133,7 +169,7 @@ public class EnergyUIDisplay : MonoBehaviour
                 }
             }
 
-            if (shouldAnimate)
+            if (shouldAnimate && gameObject.activeSelf)
             {
                 // Stop previous animation
                 if (animCoroutines[i] != null)
@@ -155,11 +191,17 @@ public class EnergyUIDisplay : MonoBehaviour
 
     private IEnumerator AnimateBlockWithDelay(Image img, Color targetColor, bool gainedEnergy, float delay)
     {
+        // Safety check - if gameObject became inactive during animation, stop
+        if (!gameObject.activeSelf) yield break;
+
         // Wait for cascade delay
         if (delay > 0f)
         {
             yield return new WaitForSeconds(delay);
         }
+
+        // Safety check again after delay
+        if (!gameObject.activeSelf) yield break;
 
         // Start the actual animation
         yield return StartCoroutine(AnimateBlock(img, targetColor, gainedEnergy));
@@ -319,5 +361,18 @@ public class EnergyUIDisplay : MonoBehaviour
     private float EaseOutQuad(float t)
     {
         return 1f - (1f - t) * (1f - t);
+    }
+
+    /// <summary>
+    /// 強制顯示UI並刷新顯示狀態
+    /// </summary>
+    public void ForceShowUI()
+    {
+        gameObject.SetActive(true);
+        if (energySystem != null)
+        {
+            UpdateEnergyDisplay(energySystem.GetCurrentEnergy(), energySystem.GetMaxEnergy());
+        }
+        Debug.Log("EnergyUIDisplay: UI force shown and refreshed");
     }
 }

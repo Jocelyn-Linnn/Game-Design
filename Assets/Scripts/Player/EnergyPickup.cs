@@ -19,7 +19,7 @@ public class EnergyPickup : MonoBehaviour
                 if (pickupSound != null)
                 {
                     // Play at reduced volume to match energy restore sound
-                    SoundManager.GetInstance()?.PlaySound2D(pickupSound, 0.001f);
+                    SoundManager.GetInstance()?.PlaySound2D(pickupSound, 0.01f);
                 }
 
                 playerEnergy.AddEnergy(energyAmount);

@@ -63,6 +63,7 @@ public class PlayerController : MonoBehaviour, IInteractor
 
     private PlayerState lastState = PlayerState.Idle; // For debug logging
     public bool IsInCutscene = false;
+    private bool isRespawnEnabled = false; // 控制是否能按R回到存档点（默认禁用，直到坐在椅子上）
 
 
     void OnEnable()
@@ -311,7 +312,7 @@ public class PlayerController : MonoBehaviour, IInteractor
     private void HandleSystemInput()
     {
         // Respawn at last chair
-        if (Input.GetKeyDown(respawnKey))
+        if (Input.GetKeyDown(respawnKey) && isRespawnEnabled)
         {
             RespawnAtLastChair();
         }
@@ -579,6 +580,12 @@ public class PlayerController : MonoBehaviour, IInteractor
     /// </summary>
     private void RespawnAtLastChair()
     {
+        if (!isRespawnEnabled)
+        {
+            Debug.Log("PlayerController: Respawn is disabled - cannot respawn at last chair");
+            return;
+        }
+
         Debug.Log("PlayerController: RespawnAtLastChair called (normal respawn, not from trip)");
 
         GameManager gameManager = GameManager.GetInstance();
@@ -673,6 +680,23 @@ public class PlayerController : MonoBehaviour, IInteractor
     public PlayerEnergy GetEnergySystem()
     {
         return energySystem;
+    }
+
+    /// <summary>
+    /// 启用/禁用回到存档点功能（R键）
+    /// </summary>
+    public void SetRespawnEnabled(bool enabled)
+    {
+        isRespawnEnabled = enabled;
+        Debug.Log($"PlayerController: Respawn enabled set to {enabled}");
+    }
+
+    /// <summary>
+    /// 检查回到存档点功能是否启用
+    /// </summary>
+    public bool IsRespawnEnabled()
+    {
+        return isRespawnEnabled;
     }
 
     // ==================== IInteractor IMPLEMENTATION ====================

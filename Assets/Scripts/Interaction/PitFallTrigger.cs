@@ -190,6 +190,13 @@ public class PitFallTrigger : MonoBehaviour
             Debug.Log("PitFallTrigger: Energy UI hidden during fall");
         }
 
+        // 禁用回到存档点功能
+        if (playerController != null)
+        {
+            playerController.SetRespawnEnabled(false);
+            Debug.Log("PitFallTrigger: Respawn disabled during fall");
+        }
+
         // 2. 移除玩家的垂直向上力，讓玩家開始下落
         currentRigidbody = playerMovement.GetComponent<Rigidbody2D>();
         if (currentRigidbody != null)

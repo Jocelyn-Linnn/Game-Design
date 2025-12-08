@@ -171,6 +171,10 @@ public class chair : MonoBehaviour, IInteractable
         // Save progress by setting this chair as spawn point
         SaveProgress();
 
+        // 重新启用回到存档点功能
+        player.SetRespawnEnabled(true);
+        Debug.Log("Chair: Respawn enabled after sitting on chair");
+
         // Automatically open the fast travel menu when sitting
         OpenFastTravelMenuForPlayer(player);
 

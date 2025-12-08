@@ -16,10 +16,9 @@ public class StoneButton : MonoBehaviour
     private bool isActivated = false;
 
     private Vector3 originalCameraPos;
-    private PlayerController cachedPlayer;
-    private PlayerMovement cachedMovement; // ⭐ movement system
-    private Animator animator;
+    private PlayerMovement cachedMovement;
 
+    private SpriteRenderer spriteRenderer;
 
     private void Start()
     {
@@ -29,40 +28,37 @@ public class StoneButton : MonoBehaviour
         if (followScript == null)
             followScript = mainCamera.GetComponent<CameraFollow>();
 
-        animator = GetComponent<Animator>();
+        // ⭐ 取得 SpriteRenderer（因為你現在不用 Animator）
+        spriteRenderer = GetComponent<SpriteRenderer>();
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
         PlayerController player = other.GetComponent<PlayerController>();
         if (player == null) return;
-
         if (isActivated) return;
+
         isActivated = true;
+        cachedMovement = player.GetComponent<PlayerMovement>();
 
-        cachedPlayer = player;
-        cachedMovement = player.GetComponent<PlayerMovement>(); // ⭐ 取得真正控制移動的腳本
-
-        // ⭐ 完全鎖住玩家移動
+        // ⭐ 1. 鎖住玩家
         cachedMovement.StopMovement();
         cachedMovement.SetMovementLocked(true);
         cachedMovement.SetGravityEnabled(false);
 
         originalCameraPos = mainCamera.transform.position;
 
-        // ⭐ 被按下後關閉發光動畫
-        if (animator != null)
-            // animator.enabled = false;
-            animator.Play(0, 0, 0f);  // 播放當前動畫 (state 0)，從 0 秒開始
-            animator.Update(0f);      // 立即更新畫面，避免下一幀才刷新
-            animator.enabled = false; // 停在第一偵
+        // ⭐ 2. 按鈕水平翻轉（取代動畫）
+        if (spriteRenderer != null)
+            spriteRenderer.flipX = true;
 
+        // ⭐ 3. 開始鏡頭流程
         StartCoroutine(CameraFlow());
     }
 
     private IEnumerator CameraFlow()
     {
-        // 停用鏡頭跟隨
+        // 暫停鏡頭跟隨
         if (followScript != null) followScript.enabled = false;
 
         yield return MoveCamera(mainCamera.transform.position, stoneWall.transform.position);
@@ -71,14 +67,11 @@ public class StoneButton : MonoBehaviour
 
         yield return MoveCamera(mainCamera.transform.position, originalCameraPos);
 
-        // ⭐ 解鎖玩家移動
-        if (cachedMovement != null)
-        {
-            cachedMovement.SetMovementLocked(false);
-            cachedMovement.SetGravityEnabled(true);
-        }
+        // ⭐ 解除鎖定
+        cachedMovement.SetMovementLocked(false);
+        cachedMovement.SetGravityEnabled(true);
 
-        // 恢復 CameraFollow
+        // 恢復鏡頭跟隨
         if (followScript != null) followScript.enabled = true;
     }
 
@@ -93,11 +86,11 @@ public class StoneButton : MonoBehaviour
         {
             elapsed += Time.deltaTime;
             float t = Mathf.Clamp01(elapsed / cameraMoveDuration);
-            mainCamera.transform.position = Vector3.Lerp(start, end, t);
 
+            mainCamera.transform.position = Vector3.Lerp(start, end, t);
             yield return null;
         }
+
         mainCamera.transform.position = end;
     }
 }
-

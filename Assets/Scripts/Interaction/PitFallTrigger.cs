@@ -101,19 +101,8 @@ public class PitFallTrigger : MonoBehaviour
                 return;
             }
 
-            Debug.Log("PitFallTrigger: Player entered trigger zone - checking jump state...");
-
-            // 檢查玩家是否正在跳躍（垂直速度 > 0）
-            Rigidbody2D playerRb = collision.GetComponent<Rigidbody2D>();
-            if (playerRb != null && playerRb.linearVelocity.y > 0.1f)
-            {
-                Debug.Log($"PitFallTrigger: Player is jumping (velocity: {playerRb.linearVelocity}), triggering pitfall!");
-                StartPitfallEvent();
-            }
-            else
-            {
-                Debug.Log($"PitFallTrigger: Player not jumping (velocity: {playerRb?.linearVelocity ?? Vector2.zero}), ignoring trigger");
-            }
+            Debug.Log("PitFallTrigger: Player entered trigger zone - triggering pitfall!");
+            StartPitfallEvent();
         }
         else
         {

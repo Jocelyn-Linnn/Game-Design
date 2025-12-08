@@ -61,6 +61,8 @@ public class VideoPlayerController : MonoBehaviour
         videoPlayer.playOnAwake = false;
         videoPlayer.renderMode = VideoRenderMode.RenderTexture;
         videoPlayer.audioOutputMode = VideoAudioOutputMode.Direct;
+        videoPlayer.skipOnDrop = true; // 允許跳幀以保持同步
+        videoPlayer.waitForFirstFrame = true; // 等待第一幀準備好
         
         // 註冊影片結束事件
         videoPlayer.loopPointReached += OnVideoEnd;
@@ -70,6 +72,8 @@ public class VideoPlayerController : MonoBehaviour
         {
             videoDisplay.gameObject.SetActive(false);
         }
+        
+        Debug.Log("VideoPlayerController: 初始化完成");
     }
     
     void Start()
@@ -132,11 +136,31 @@ public class VideoPlayerController : MonoBehaviour
             videoDisplay.transform.SetAsLastSibling(); // 確保在最上層
         }
         
-        // 開始播放
+        // 開始播放影片
         isPlaying = true;
-        videoPlayer.Play();
+        StartCoroutine(PrepareAndPlayVideo());
         
-        Debug.Log($"VideoPlayerController: 開始播放影片 '{videoPlayer.clip.name}'");
+        Debug.Log($"VideoPlayerController: 準備播放影片 '{videoPlayer.clip.name}'");
+    }
+    
+    /// <summary>
+    /// 準備並播放影片的協程
+    /// </summary>
+    private IEnumerator PrepareAndPlayVideo()
+    {
+        // 先準備影片
+        videoPlayer.Prepare();
+        
+        // 等待影片準備完成
+        while (!videoPlayer.isPrepared)
+        {
+            yield return null;
+        }
+        
+        Debug.Log("VideoPlayerController: 影片準備完成，開始播放");
+        
+        // 播放影片
+        videoPlayer.Play();
     }
     
     /// <summary>
@@ -169,6 +193,8 @@ public class VideoPlayerController : MonoBehaviour
         int width = (int)videoPlayer.clip.width;
         int height = (int)videoPlayer.clip.height;
         
+        Debug.Log($"VideoPlayerController: 創建 RenderTexture ({width} x {height})");
+        
         if (renderTexture == null || renderTexture.width != width || renderTexture.height != height)
         {
             if (renderTexture != null)
@@ -176,14 +202,24 @@ public class VideoPlayerController : MonoBehaviour
                 renderTexture.Release();
             }
             
-            renderTexture = new RenderTexture(width, height, 0);
-            videoPlayer.targetTexture = renderTexture;
+            renderTexture = new RenderTexture(width, height, 0, RenderTextureFormat.ARGB32);
+            renderTexture.Create();
+            
+            Debug.Log($"VideoPlayerController: RenderTexture 已創建 - isCreated: {renderTexture.IsCreated()}");
         }
+        
+        // 設置 VideoPlayer 的輸出
+        videoPlayer.targetTexture = renderTexture;
         
         // 將 RenderTexture 指定給 RawImage
         if (videoDisplay != null)
         {
             videoDisplay.texture = renderTexture;
+            Debug.Log($"VideoPlayerController: RenderTexture 已指定給 RawImage");
+        }
+        else
+        {
+            Debug.LogError("VideoPlayerController: VideoDisplay (RawImage) 未設置！");
         }
     }
     

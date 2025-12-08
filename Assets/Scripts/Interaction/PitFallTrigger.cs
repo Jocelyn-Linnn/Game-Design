@@ -29,6 +29,7 @@ public class PitFallTrigger : MonoBehaviour
     private PlayerEnergy playerEnergy;
     private PlayerStateMachine stateMachine;
     private PlayerAnimationController animationController;
+    private EnergyUIDisplay energyUI;
 
     // 臨時變數，用於在不同方法間共享數據
     private Rigidbody2D currentRigidbody;
@@ -52,6 +53,39 @@ public class PitFallTrigger : MonoBehaviour
         }
 
         Debug.Log($"PitFallTrigger: Initialized on '{gameObject.name}' with collider '{collider.GetType().Name}' (IsTrigger: {collider.isTrigger})");
+
+        // Initialize EnergyUI reference at start
+        InitializeEnergyUI();
+    }
+
+    private void InitializeEnergyUI()
+    {
+        if (energyUI == null)
+        {
+            // First try to use the static singleton instance
+            if (EnergyUIDisplay.Instance != null)
+            {
+                energyUI = EnergyUIDisplay.Instance;
+            }
+            // If not found (e.g. if Awake hasn't run yet or other issues), try finding by type including inactive
+            else
+            {
+                // Try to find by GameObject name first
+                GameObject energyUIGameObject = GameObject.Find("PlayerEnergyUI");
+                if (energyUIGameObject != null)
+                {
+                    energyUI = energyUIGameObject.GetComponent<EnergyUIDisplay>();
+                }
+                
+                // Fallback to finding by type (including inactive)
+                if (energyUI == null)
+                {
+                    energyUI = FindFirstObjectByType<EnergyUIDisplay>(FindObjectsInactive.Include);
+                }
+            }
+
+            Debug.Log($"PitFallTrigger: EnergyUIDisplay initialized: {(energyUI != null ? "SUCCESS" : "FAILED")}");
+        }
     }
     
     private void OnTriggerEnter2D(Collider2D collision)
@@ -67,19 +101,8 @@ public class PitFallTrigger : MonoBehaviour
                 return;
             }
 
-            Debug.Log("PitFallTrigger: Player entered trigger zone - checking jump state...");
-
-            // 檢查玩家是否正在跳躍（垂直速度 > 0）
-            Rigidbody2D playerRb = collision.GetComponent<Rigidbody2D>();
-            if (playerRb != null && playerRb.linearVelocity.y > 0.1f)
-            {
-                Debug.Log($"PitFallTrigger: Player is jumping (velocity: {playerRb.linearVelocity}), triggering pitfall!");
-                StartPitfallEvent();
-            }
-            else
-            {
-                Debug.Log($"PitFallTrigger: Player not jumping (velocity: {playerRb?.linearVelocity ?? Vector2.zero}), ignoring trigger");
-            }
+            Debug.Log("PitFallTrigger: Player entered trigger zone - triggering pitfall!");
+            StartPitfallEvent();
         }
         else
         {
@@ -122,6 +145,12 @@ public class PitFallTrigger : MonoBehaviour
             animationController = playerController.GetComponent<PlayerAnimationController>();
         }
 
+        // EnergyUI should already be initialized in Start(), but double-check
+        if (energyUI == null)
+        {
+            InitializeEnergyUI();
+        }
+
         // 初始化畫面效果
         if (screenFadeImage == null)
         {
@@ -153,6 +182,13 @@ public class PitFallTrigger : MonoBehaviour
         // 1. 立即鎖定玩家控制
         stateMachine.ChangeState(PlayerState.Cutscene);
         playerMovement.SetMovementLocked(true); // 鎖定移動，玩家無法控制
+
+        // 隱藏能量UI
+        if (energyUI != null)
+        {
+            energyUI.gameObject.SetActive(false);
+            Debug.Log("PitFallTrigger: Energy UI hidden during fall");
+        }
 
         // 2. 移除玩家的垂直向上力，讓玩家開始下落
         currentRigidbody = playerMovement.GetComponent<Rigidbody2D>();
@@ -225,6 +261,24 @@ public class PitFallTrigger : MonoBehaviour
         // 恢復玩家控制
         stateMachine.ChangeState(PlayerState.Idle);
         playerMovement.SetMovementLocked(false);
+
+        // 顯示能量UI
+        if (energyUI != null)
+        {
+            energyUI.ForceShowUI();
+            Debug.Log("PitFallTrigger: Energy UI shown after fall recovery");
+        }
+        else
+        {
+            Debug.LogWarning("PitFallTrigger: Cannot show Energy UI - reference is null!");
+        }
+
+        // 關閉無限能量，開始正常消耗
+        if (playerEnergy != null)
+        {
+            playerEnergy.SetInfiniteEnergy(false);
+            Debug.Log("PitFallTrigger: Infinite energy disabled - normal consumption starts");
+        }
 
         Debug.Log("PitFallTrigger: Pitfall sequence completed - player control restored");
     }

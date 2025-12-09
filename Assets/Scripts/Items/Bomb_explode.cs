@@ -97,7 +97,7 @@ public class Bomb_explode : MonoBehaviour
             targetFloor.SetActive(false);
             if (targetFloor1 != null)
             {
-                targetFloor1.SetActive(false);
+            targetFloor1.SetActive(false);
             }
             var hint = FindObjectOfType<HintTrigger>();
             if (hint != null)
@@ -107,11 +107,11 @@ public class Bomb_explode : MonoBehaviour
             Debug.Log("💥 Floor_destroy_by_bomb 已消失！");
         }
 
-        // 2. 偵測並摧毀範圍內的石頭
-        DestroyNearbyStones();
+        // 2. 讓整個 "Floor_destroy_by_bomb" Tilemap 消失
+        DestroyTargetTilemap();
 
-        // 3. 偵測並破壞範圍內的 Tilemap 磚塊
-        DestroyNearbyTiles();
+        // 3. 偵測並摧毀範圍內的石頭
+        DestroyNearbyStones();
 
         // 摧毀炸彈物件本身
         Destroy(gameObject, 0.2f);
@@ -145,61 +145,36 @@ public class Bomb_explode : MonoBehaviour
     }
 
     /// <summary>
-    /// 破壞爆炸範圍內的 Tilemap 磚塊
+    /// 讓整個 "Floor_destroy_by_bomb" Tilemap 消失
     /// </summary>
-    private void DestroyNearbyTiles()
+    private void DestroyTargetTilemap()
     {
-        // 尋找場景中所有的 Tilemap
-        Tilemap[] tilemaps = FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
+        // 尋找名為 "Floor_destroy_by_bomb" 的 GameObject
+        GameObject targetTilemapObj = GameObject.Find("Floor_destroy_by_bomb");
         
-        if (tilemaps.Length == 0)
+        if (targetTilemapObj != null)
         {
-            Debug.Log("Bomb_explode: 場景中沒有找到 Tilemap");
-            return;
-        }
-
-        int tilesDestroyed = 0;
-        Vector3 bombPosition = transform.position;
-
-        foreach (var tilemap in tilemaps)
-        {
-            // 計算爆炸範圍涵蓋的磚塊座標範圍
-            Vector3Int centerCell = tilemap.WorldToCell(bombPosition);
-            int radiusInCells = Mathf.CeilToInt(explosionRadius / tilemap.cellSize.x);
-
-            // 遍歷範圍內的所有磚塊
-            for (int x = -radiusInCells; x <= radiusInCells; x++)
-            {
-                for (int y = -radiusInCells; y <= radiusInCells; y++)
-                {
-                    Vector3Int cellPosition = centerCell + new Vector3Int(x, y, 0);
-                    
-                    // 檢查這個位置是否有磚塊
-                    if (tilemap.HasTile(cellPosition))
-                    {
-                        // 計算磚塊中心與炸彈的距離
-                        Vector3 tileWorldPos = tilemap.GetCellCenterWorld(cellPosition);
-                        float distance = Vector3.Distance(bombPosition, tileWorldPos);
-
-                        // 如果在爆炸範圍內，就摧毀這個磚塊
-                        if (distance <= explosionRadius)
-                        {
-                            tilemap.SetTile(cellPosition, null);
-                            tilesDestroyed++;
-                            Debug.Log($"💥 Bomb_explode: 破壞磚塊於 {cellPosition} (距離: {distance:F2})");
-                        }
-                    }
-                }
-            }
-        }
-
-        if (tilesDestroyed > 0)
-        {
-            Debug.Log($"💥 Bomb_explode: 共破壞了 {tilesDestroyed} 個磚塊！");
+            Debug.Log($"💥 Bomb_explode: 找到目標 Tilemap '{targetTilemapObj.name}'，讓它消失");
+            targetTilemapObj.SetActive(false);
+            Debug.Log("✅ Floor_destroy_by_bomb 已消失！");
         }
         else
         {
-            Debug.Log("Bomb_explode: 爆炸範圍內沒有磚塊可破壞");
+            // 如果找不到，嘗試搜尋所有 Tilemap
+            Tilemap[] allTilemaps = FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
+            foreach (var tilemap in allTilemaps)
+            {
+                if (tilemap.gameObject.name == "Floor_destroy_by_bomb" || 
+                    tilemap.gameObject.name.Contains("Floor_destroy_by_bomb"))
+                {
+                    Debug.Log($"💥 Bomb_explode: 找到目標 Tilemap '{tilemap.gameObject.name}'，讓它消失");
+                    tilemap.gameObject.SetActive(false);
+                    Debug.Log("✅ Floor_destroy_by_bomb 已消失！");
+                    return;
+                }
+            }
+            
+            Debug.LogWarning("⚠️ Bomb_explode: 找不到名為 'Floor_destroy_by_bomb' 的 Tilemap！");
         }
     }
 

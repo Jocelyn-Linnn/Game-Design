@@ -50,19 +50,20 @@ public class Stone : MonoBehaviour
     [SerializeField] private bool startKinematic = true;
 
     [Header("Collision Settings")]
-    [Tooltip("石頭經過時破壞磚塊的範圍半徑")]
+    [Tooltip("石頭碰撞時破壞磚塊的範圍半徑")]
     [SerializeField] private float impactRadius = 1.5f;
 
     [Tooltip("是否顯示碰撞破壞範圍 (僅用於除錯)")]
     [SerializeField] private bool showImpactGizmo = true;
 
-    [Tooltip("Autolayer 的 GameObject 名稱（用於識別可穿透的圖層）")]
-    [SerializeField] private string[] autoLayerNames = { "AutoLayer", "Autolayer", "autolayer" };
+    [Tooltip("要破壞的 Tilemap 名稱")]
+    [SerializeField] private string targetTilemapName = "Floor_destroy_by_bomb";
 
     private PlayerUseBomb nearbyPlayer;   // 記錄可互動的玩家
     private Rigidbody2D rb;
     private bool hasExploded = false;
     private bool isFalling = false;  // 是否正在掉落中
+    private Tilemap targetTilemap = null;  // 目標 Tilemap 的引用
 
     void Start()
     {
@@ -94,10 +95,10 @@ public class Stone : MonoBehaviour
 
     void FixedUpdate()
     {
-        // 如果石頭正在掉落，持續檢查並破壞 autolayer 磚塊
-        if (isFalling)
+        // 如果石頭正在掉落，持續檢查並破壞目標 Tilemap 的磚塊
+        if (isFalling && targetTilemap != null)
         {
-            DestroyAutoLayersAtPosition();
+            DestroyTilesAtPosition();
         }
     }
 
@@ -146,91 +147,80 @@ public class Stone : MonoBehaviour
 
         Debug.Log($"🪨 Stone '{gameObject.name}' 碰撞到：{collision.gameObject.name}");
 
-        // 檢查是否碰到 AutoLayer（可穿透的圖層）
-        bool isAutoLayer = IsAutoLayer(collision.gameObject);
-        
-        if (isAutoLayer)
+        // 檢查是否碰到目標 Tilemap
+        Tilemap hitTilemap = collision.gameObject.GetComponent<Tilemap>();
+        if (hitTilemap == null)
         {
-            Debug.Log($"🪨 Stone 碰到 AutoLayer '{collision.gameObject.name}'，忽略碰撞繼續穿透");
-            // AutoLayer 不會阻擋石頭，忽略此碰撞
-            // 磚塊破壞在 FixedUpdate 中持續處理
-            
-            // 忽略這個 collider 的碰撞
-            Collider2D stoneCollider = GetComponent<Collider2D>();
-            Collider2D autoLayerCollider = collision.collider;
-            if (stoneCollider != null && autoLayerCollider != null)
-            {
-                Physics2D.IgnoreCollision(stoneCollider, autoLayerCollider, true);
-            }
-            
+            // 嘗試在父物件中尋找
+            hitTilemap = collision.gameObject.GetComponentInParent<Tilemap>();
+        }
+
+        if (hitTilemap != null && (hitTilemap.gameObject.name == targetTilemapName || hitTilemap.gameObject.name.Contains(targetTilemapName)))
+        {
+            Debug.Log($"🪨 Stone 碰到目標 Tilemap '{hitTilemap.gameObject.name}'，破壞碰撞點的磚塊");
+            // 破壞碰撞點周圍的磚塊（在 FixedUpdate 中持續處理）
+            // 不停止掉落，讓石頭繼續穿透
             return;
         }
 
-        // 1. 處理特定名稱的地板物件（實體地板）
+        // 處理特定名稱的地板物件（實體地板）
         if (collision.gameObject.name == "Floor_destroy_by_stone")
         {
             collision.gameObject.SetActive(false);
             Debug.Log("💥 Floor_destroy_by_stone 被石頭砸到後消失！");
         }
 
-        // 2. 碰到實體地板，停止掉落
+        // 碰到其他實體地板，停止掉落
         Debug.Log($"🪨 Stone 碰到實體地板 '{collision.gameObject.name}'，停止掉落");
         isFalling = false;
     }
 
     /// <summary>
-    /// 檢查物件是否是 AutoLayer（可穿透的圖層）
+    /// 在石頭當前位置持續破壞目標 Tilemap 的磚塊
     /// </summary>
-    private bool IsAutoLayer(GameObject obj)
+    private void DestroyTilesAtPosition()
     {
-        // 檢查物件名稱是否包含 AutoLayer 關鍵字
-        foreach (string layerName in autoLayerNames)
+        if (targetTilemap == null)
         {
-            if (obj.name.Contains(layerName))
+            // 嘗試尋找目標 Tilemap
+            targetTilemap = FindTilemapByName(targetTilemapName);
+            if (targetTilemap == null)
             {
-                return true;
+                return;
             }
-        }
-
-        // 檢查父物件名稱
-        Transform parent = obj.transform.parent;
-        if (parent != null)
-        {
-            foreach (string layerName in autoLayerNames)
-            {
-                if (parent.name.Contains(layerName))
-                {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// 在石頭當前位置持續破壞 AutoLayer 磚塊
-    /// </summary>
-    private void DestroyAutoLayersAtPosition()
-    {
-        // 尋找場景中所有的 Tilemap
-        Tilemap[] tilemaps = FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
-        
-        if (tilemaps.Length == 0)
-        {
-            return;
         }
 
         Vector3 stonePosition = transform.position;
+        DestroyTilesInRadius(targetTilemap, stonePosition);
+    }
 
-        foreach (var tilemap in tilemaps)
+    /// <summary>
+    /// 根據名稱尋找 Tilemap
+    /// </summary>
+    private Tilemap FindTilemapByName(string name)
+    {
+        // 先嘗試直接尋找 GameObject
+        GameObject tilemapObj = GameObject.Find(name);
+        if (tilemapObj != null)
         {
-            // 只破壞 AutoLayer 的磚塊
-            if (IsAutoLayer(tilemap.gameObject))
+            Tilemap tilemap = tilemapObj.GetComponent<Tilemap>();
+            if (tilemap != null)
             {
-                DestroyTilesInRadius(tilemap, stonePosition);
+                return tilemap;
             }
         }
+
+        // 如果找不到，搜尋所有 Tilemap
+        Tilemap[] allTilemaps = FindObjectsByType<Tilemap>(FindObjectsSortMode.None);
+        foreach (var tilemap in allTilemaps)
+        {
+            if (tilemap.gameObject.name == name || tilemap.gameObject.name.Contains(name))
+            {
+                return tilemap;
+            }
+        }
+
+        return null;
     }
 
     /// <summary>
@@ -263,7 +253,6 @@ public class Stone : MonoBehaviour
                     {
                         tilemap.SetTile(cellPosition, null);
                         tilesDestroyed++;
-                        Debug.Log($"💥 Stone 破壞磚塊於 {cellPosition} (距離: {distance:F2})");
                     }
                 }
             }
@@ -271,21 +260,8 @@ public class Stone : MonoBehaviour
 
         if (tilesDestroyed > 0)
         {
-            Debug.Log($"💥 Stone 共破壞了 {tilesDestroyed} 個磚塊 (Tilemap: {tilemap.gameObject.name})");
+            Debug.Log($"💥 Stone 在 '{tilemap.gameObject.name}' 中破壞了 {tilesDestroyed} 個磚塊");
         }
-        else
-        {
-            Debug.Log($"⚠️ Stone 碰撞範圍內沒有磚塊可破壞 (Tilemap: {tilemap.gameObject.name})");
-        }
-    }
-
-    /// <summary>
-    /// 破壞碰撞點附近所有 Tilemap 的磚塊
-    /// </summary>
-    private void DestroyNearbyTilemaps(Vector3 position)
-    {
-        // 這個方法不再需要，因為在 FixedUpdate 中持續處理
-        // 保留以防需要
     }
 
     /// <summary>
@@ -301,7 +277,22 @@ public class Stone : MonoBehaviour
 
         hasExploded = true;
         isFalling = true;  // 開始掉落狀態
+        
         Debug.Log($"💣 Stone '{gameObject.name}' 被炸彈炸中！開始掉落...");
+
+        // 預先尋找目標 Tilemap
+        targetTilemap = FindTilemapByName(targetTilemapName);
+        if (targetTilemap != null)
+        {
+            Debug.Log($"✅ Stone 找到目標 Tilemap: {targetTilemap.gameObject.name}");
+            
+            // 預先忽略目標 Tilemap 的碰撞，讓石頭可以穿透
+            IgnoreTilemapCollision(targetTilemap);
+        }
+        else
+        {
+            Debug.LogWarning($"⚠️ Stone 找不到目標 Tilemap: {targetTilemapName}");
+        }
 
         if (rb != null)
         {
@@ -323,6 +314,31 @@ public class Stone : MonoBehaviour
         {
             nearbyPlayer.SetNearStone(false, null);
             nearbyPlayer = null;
+        }
+    }
+
+    /// <summary>
+    /// 忽略目標 Tilemap 的碰撞，讓石頭可以穿透
+    /// </summary>
+    private void IgnoreTilemapCollision(Tilemap tilemap)
+    {
+        Collider2D stoneCollider = GetComponent<Collider2D>();
+        if (stoneCollider == null)
+        {
+            Debug.LogError("Stone: 找不到 Collider2D，無法設定碰撞忽略！");
+            return;
+        }
+
+        // 尋找 Tilemap 上的 TilemapCollider2D
+        TilemapCollider2D tilemapCollider = tilemap.GetComponent<TilemapCollider2D>();
+        if (tilemapCollider != null)
+        {
+            Physics2D.IgnoreCollision(stoneCollider, tilemapCollider, true);
+            Debug.Log($"🚫 已設定忽略 Tilemap 碰撞: {tilemap.gameObject.name}");
+        }
+        else
+        {
+            Debug.LogWarning($"⚠️ Tilemap '{tilemap.gameObject.name}' 沒有 TilemapCollider2D 組件");
         }
     }
 

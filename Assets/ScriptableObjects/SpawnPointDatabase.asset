@@ -33,7 +33,7 @@ MonoBehaviour:
     sceneName: MainScene
     isOneTimeUse: 0
     isTransportable: 1
-    isActive: 1
+    isActive: 0
     isChairSpawn: 1
     activeVisual: {fileID: 0}
     activationSound: {fileID: 0}
@@ -79,10 +79,10 @@ MonoBehaviour:
     restoresEnergy: 1
     energyRestoreAmount: 0
   currentActiveSpawnPoint:
-    spawnPointId: third_chair
-    displayName: Deep Chasm
+    spawnPointId: first_chair
+    displayName: Prime Cloister
     locationDescription: 
-    position: {x: 22.549002, y: -35.724236, z: 0}
+    position: {x: 29.673405, y: -21.756239, z: 0}
     sceneName: MainScene
     isOneTimeUse: 0
     isTransportable: 1

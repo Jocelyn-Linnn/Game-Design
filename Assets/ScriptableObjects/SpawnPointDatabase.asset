@@ -12,77 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 56de31a80b33a4d70ac448f2cf11fdf5, type: 3}
   m_Name: SpawnPointDatabase
   m_EditorClassIdentifier: Assembly-CSharp::SpawnPointDatabase
-  allSpawnPoints:
-  - spawnPointId: default_spawn
-    displayName: Starting Point
-    locationDescription: Default starting location
-    position: {x: -7.35, y: -4.32, z: 0}
-    sceneName: MainScene
-    isOneTimeUse: 0
-    isTransportable: 0
-    isActive: 0
-    isChairSpawn: 0
-    activeVisual: {fileID: 0}
-    activationSound: {fileID: 0}
-    restoresEnergy: 0
-    energyRestoreAmount: 0
-  - spawnPointId: third_chair
-    displayName: Deep Chasm
-    locationDescription: 
-    position: {x: 22.549002, y: -35.724236, z: 0}
-    sceneName: MainScene
-    isOneTimeUse: 0
-    isTransportable: 1
-    isActive: 0
-    isChairSpawn: 1
-    activeVisual: {fileID: 0}
-    activationSound: {fileID: 0}
-    restoresEnergy: 1
-    energyRestoreAmount: 0
-  - spawnPointId: end_chair
+  allSpawnPoints: []
+  currentActiveSpawnPoint:
+    spawnPointId: end_chair
     displayName: Abyssal Terminus
     locationDescription: 
     position: {x: 1.1984024, y: -44.74624, z: 0}
-    sceneName: MainScene
-    isOneTimeUse: 0
-    isTransportable: 1
-    isActive: 1
-    isChairSpawn: 1
-    activeVisual: {fileID: 0}
-    activationSound: {fileID: 0}
-    restoresEnergy: 1
-    energyRestoreAmount: 0
-  - spawnPointId: second_chair
-    displayName: Gloom Hollow
-    locationDescription: 
-    position: {x: 41.359406, y: -29.208239, z: 0}
-    sceneName: MainScene
-    isOneTimeUse: 0
-    isTransportable: 1
-    isActive: 0
-    isChairSpawn: 1
-    activeVisual: {fileID: 0}
-    activationSound: {fileID: 0}
-    restoresEnergy: 1
-    energyRestoreAmount: 0
-  - spawnPointId: first_chair
-    displayName: Prime Cloister
-    locationDescription: 
-    position: {x: 29.673405, y: -21.756239, z: 0}
-    sceneName: MainScene
-    isOneTimeUse: 0
-    isTransportable: 1
-    isActive: 1
-    isChairSpawn: 1
-    activeVisual: {fileID: 0}
-    activationSound: {fileID: 0}
-    restoresEnergy: 1
-    energyRestoreAmount: 0
-  currentActiveSpawnPoint:
-    spawnPointId: first_chair
-    displayName: Prime Cloister
-    locationDescription: 
-    position: {x: 29.673405, y: -21.756239, z: 0}
     sceneName: MainScene
     isOneTimeUse: 0
     isTransportable: 1

@@ -9,8 +9,8 @@ using UnityEngine;
 public class PlayerFootstepSound : MonoBehaviour
 {
     [Header("Footstep Sound Configuration")]
-    [Tooltip("Audio clip played when player takes a step")]
-    [SerializeField] private AudioClip footstepSound;
+    [Tooltip("Array of audio clips to randomly play when player takes a step")]
+    [SerializeField] private AudioClip[] footstepSounds;
     
     [Tooltip("Volume of footstep sounds (0.0 to 2.0, can exceed 1.0 for louder sounds)")]
     [SerializeField, Range(0f, 2f)] private float footstepVolume = 1.5f;
@@ -181,12 +181,14 @@ public class PlayerFootstepSound : MonoBehaviour
 
     /// <summary>
     /// Play a footstep sound
+    /// Randomly selects one sound from the footstepSounds array
     /// Uses dedicated AudioSource component for better volume control
     /// Configured as 2D sound to avoid distance attenuation
     /// </summary>
     private void PlayFootstepSound()
     {
-        if (footstepSound == null)
+        // Check if footstep sounds array is valid
+        if (footstepSounds == null || footstepSounds.Length == 0)
         {
             return;
         }
@@ -197,29 +199,61 @@ public class PlayerFootstepSound : MonoBehaviour
             InitializeAudioSource();
         }
 
+        // Randomly select a footstep sound from the array
+        int randomIndex = Random.Range(0, footstepSounds.Length);
+        AudioClip selectedSound = footstepSounds[randomIndex];
+
+        // Skip if the selected clip is null
+        if (selectedSound == null)
+        {
+            return;
+        }
+
         // Set AudioSource volume to footstepVolume (can be 0.0 to 2.0)
         // AudioSource.volume can exceed 1.0 to amplify sound beyond normal range
         audioSource.volume = footstepVolume;
 
         // Play sound using AudioSource (2D sound, no distance attenuation)
         // Use volume scale of 1.0 since AudioSource.volume already controls the amplification
-        audioSource.PlayOneShot(footstepSound, 1f);
+        audioSource.PlayOneShot(selectedSound, 1f);
     }
 
     /// <summary>
-    /// Set the footstep sound clip
+    /// Set the footstep sound clips array
+    /// </summary>
+    public void SetFootstepSounds(AudioClip[] clips)
+    {
+        footstepSounds = clips;
+    }
+
+    /// <summary>
+    /// Set a single footstep sound clip (converts to array with one element)
+    /// Provided for backwards compatibility
     /// </summary>
     public void SetFootstepSound(AudioClip clip)
     {
-        footstepSound = clip;
+        footstepSounds = new AudioClip[] { clip };
     }
 
     /// <summary>
-    /// Get the current footstep sound clip
+    /// Get the footstep sound clips array
+    /// </summary>
+    public AudioClip[] GetFootstepSounds()
+    {
+        return footstepSounds;
+    }
+
+    /// <summary>
+    /// Get the first footstep sound clip (if exists)
+    /// Provided for backwards compatibility
     /// </summary>
     public AudioClip GetFootstepSound()
     {
-        return footstepSound;
+        if (footstepSounds != null && footstepSounds.Length > 0)
+        {
+            return footstepSounds[0];
+        }
+        return null;
     }
 
     /// <summary>

@@ -173,3 +173,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f8f18611263222248a10aeddae49b232, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Bomb_explode
+  explosionSound: {fileID: 8300000, guid: 3941b869171a54061b2923ea308f1038, type: 3}
+  explosionVolume: 1
+  playOnStart: 1

@@ -293,6 +293,33 @@ public class PlayerEnergy : MonoBehaviour
     }
 
     /// <summary>
+    /// Set current energy to a specific value (clamped between 0 and maxEnergy)
+    /// </summary>
+    /// <param name="amount">Amount to set energy to</param>
+    public void SetEnergy(int amount)
+    {
+        int oldEnergy = currentEnergy;
+        currentEnergy = Mathf.Clamp(amount, 0, maxEnergy);
+
+        if (showDebugInfo)
+        {
+            Debug.Log($"<color=cyan>PlayerEnergy: Energy set to {currentEnergy}/{maxEnergy}</color>");
+        }
+
+        OnEnergyChanged?.Invoke(currentEnergy, maxEnergy);
+
+        // Trigger events if energy changed
+        if (oldEnergy > 0 && currentEnergy == 0)
+        {
+            OnEnergyDepleted?.Invoke();
+        }
+        else if (oldEnergy < maxEnergy && currentEnergy == maxEnergy)
+        {
+            OnEnergyRestored?.Invoke();
+        }
+    }
+
+    /// <summary>
     /// Play energy restore sound effect
     /// </summary>
     private void PlayEnergyRestoreSound()

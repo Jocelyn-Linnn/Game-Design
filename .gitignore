@@ -120,6 +120,9 @@ AssetBundles/
 # JetBrains Rider Plugin
 /[Aa]ssets/Plugins/Editor/JetBrains*
 
+# URP Package Samples
+/[Aa]ssets/[Ss]amples/Universal Render Pipeline/**/URP Package Samples/
+
 # Blender temporary files
 *.blend1
 

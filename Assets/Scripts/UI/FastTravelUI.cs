@@ -28,6 +28,9 @@ public class FastTravelUI : MonoBehaviour
     [Tooltip("Title text")]
     [SerializeField] private TextMeshProUGUI titleText;
 
+    [Tooltip("Controls instruction text")]
+    [SerializeField] private TextMeshProUGUI controlsText;
+
     [Header("Map Preview")]
     [Tooltip("RawImage component to display map preview")]
     [SerializeField] private RawImage mapPreviewImage;
@@ -207,10 +210,99 @@ public class FastTravelUI : MonoBehaviour
             titleText.text = "Fast Travel";
         }
 
+        // Set controls instruction text - try to find it if not assigned
+        if (controlsText == null && fastTravelPanel != null)
+        {
+            // Try to find by name
+            controlsText = FindTextComponent(fastTravelPanel.transform, "ControlsText");
+            if (controlsText == null)
+            {
+                controlsText = FindTextComponent(fastTravelPanel.transform, "InstructionsText");
+            }
+            if (controlsText == null)
+            {
+                controlsText = FindTextComponent(fastTravelPanel.transform, "Controls");
+            }
+        }
+
+        // Setup controls text position and content
+        SetupControlsText();
+
         // Ensure panel is inactive initially
         if (fastTravelPanel != null)
         {
             fastTravelPanel.SetActive(false);
+        }
+    }
+
+    /// <summary>
+    /// Setup controls text - create if needed and position at bottom center
+    /// </summary>
+    private void SetupControlsText()
+    {
+        // Try to find controls text if not assigned
+        if (controlsText == null && fastTravelPanel != null)
+        {
+            controlsText = FindTextComponent(fastTravelPanel.transform, "ControlsText");
+            if (controlsText == null)
+            {
+                controlsText = FindTextComponent(fastTravelPanel.transform, "InstructionsText");
+            }
+            if (controlsText == null)
+            {
+                controlsText = FindTextComponent(fastTravelPanel.transform, "Controls");
+            }
+        }
+
+        // Create controls text if it doesn't exist
+        if (controlsText == null && fastTravelPanel != null)
+        {
+            GameObject controlsObj = new GameObject("ControlsText");
+            controlsObj.transform.SetParent(fastTravelPanel.transform);
+            
+            RectTransform rectTransform = controlsObj.AddComponent<RectTransform>();
+            controlsText = controlsObj.AddComponent<TextMeshProUGUI>();
+            
+            // Set position to bottom center
+            rectTransform.anchorMin = new Vector2(0.5f, 0f);
+            rectTransform.anchorMax = new Vector2(0.5f, 0f);
+            rectTransform.pivot = new Vector2(0.5f, 0f);
+            rectTransform.anchoredPosition = new Vector2(0f, 20f); // 20 pixels from bottom
+            rectTransform.sizeDelta = new Vector2(400f, 30f);
+            
+            // Set text properties
+            controlsText.text = "UP/DOWN: Select  |  ENTER: Teleport  |  Z: Close";
+            controlsText.fontSize = 14f;
+            controlsText.alignment = TextAlignmentOptions.Center;
+            controlsText.color = Color.white;
+            
+            if (showDebugInfo)
+            {
+                Debug.Log("FastTravelUI: Created ControlsText component at bottom center");
+            }
+        }
+        else if (controlsText != null)
+        {
+            // Update text content
+            controlsText.text = "UP/DOWN: Select  |  ENTER: Teleport  |  Z: Close";
+            
+            // Ensure it's positioned at bottom center
+            RectTransform rectTransform = controlsText.GetComponent<RectTransform>();
+            if (rectTransform != null)
+            {
+                rectTransform.anchorMin = new Vector2(0.5f, 0f);
+                rectTransform.anchorMax = new Vector2(0.5f, 0f);
+                rectTransform.pivot = new Vector2(0.5f, 0f);
+                rectTransform.anchoredPosition = new Vector2(0f, 20f);
+            }
+            
+            // Ensure it's visible
+            controlsText.gameObject.SetActive(true);
+            
+            if (showDebugInfo)
+            {
+                Debug.Log("FastTravelUI: Controls text set successfully");
+            }
         }
     }
 
@@ -322,6 +414,9 @@ public class FastTravelUI : MonoBehaviour
         SetUIVisibility(true);
         isOpen = true;
         UpdateSpawnPointList();
+
+        // Setup controls text (ensure it's visible and positioned correctly)
+        SetupControlsText();
 
         // --- 修改開始 ---
         // 原本的程式碼: UpdateMapPreview(currentActive);

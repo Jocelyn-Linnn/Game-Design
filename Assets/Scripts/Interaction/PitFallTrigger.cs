@@ -285,6 +285,17 @@ public class PitFallTrigger : MonoBehaviour
         {
             playerEnergy.SetInfiniteEnergy(false);
             Debug.Log("PitFallTrigger: Infinite energy disabled - normal consumption starts");
+            
+            // Set energy to 0 after the pitfall
+            playerEnergy.SetEnergy(0);
+            Debug.Log("PitFallTrigger: Player energy set to 0 after pitfall");
+        }
+
+        // 重新启用回到存档点功能
+        if (playerController != null)
+        {
+            playerController.SetRespawnEnabled(true);
+            Debug.Log("PitFallTrigger: Respawn re-enabled after fall recovery");
         }
 
         Debug.Log("PitFallTrigger: Pitfall sequence completed - player control restored");

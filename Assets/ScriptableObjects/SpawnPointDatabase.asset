@@ -14,10 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SpawnPointDatabase
   allSpawnPoints: []
   currentActiveSpawnPoint:
-    spawnPointId: second_chair
-    displayName: Gloom Hollow
+    spawnPointId: end_chair
+    displayName: Abyssal Terminus
     locationDescription: 
-    position: {x: 41.359406, y: -29.208239, z: 0}
+    position: {x: 1.1984024, y: -44.74624, z: 0}
     sceneName: MainScene
     isOneTimeUse: 0
     isTransportable: 1

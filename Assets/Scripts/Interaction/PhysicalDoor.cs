@@ -53,8 +53,11 @@ public class PhysicalDoor : MonoBehaviour
     [Tooltip("是否在白光後播放影片")]
     public bool enableVideoPlayback = true;
     
-    [Tooltip("要播放的影片檔案")]
+    [Tooltip("要播放的影片檔案（用於 Editor 和其他平台）")]
     public VideoClip videoClip;
+    
+    [Tooltip("影片 URL（用於 WebGL 平台，例如：video.mp4，會從 StreamingAssets 載入）")]
+    public string videoUrl;
     
     private bool isOpened = false;
     private bool isAnimating = false;
@@ -413,7 +416,7 @@ public class PhysicalDoor : MonoBehaviour
         }
         
         // 2. 播放影片
-        if (enableVideoPlayback && videoClip != null)
+        if (enableVideoPlayback)
         {
             VideoPlayerController videoController = VideoPlayerController.GetInstance();
             
@@ -422,10 +425,28 @@ public class PhysicalDoor : MonoBehaviour
                 Debug.Log("PhysicalDoor: 開始播放影片");
                 
                 bool videoCompleted = false;
-                videoController.PlayVideo(videoClip, () => 
+                
+                // 優先使用 URL（WebGL 平台）
+                if (!string.IsNullOrEmpty(videoUrl))
                 {
-                    videoCompleted = true;
-                });
+                    videoController.PlayVideoByUrl(videoUrl, () => 
+                    {
+                        videoCompleted = true;
+                    });
+                }
+                // 否則使用 VideoClip
+                else if (videoClip != null)
+                {
+                    videoController.PlayVideo(videoClip, () => 
+                    {
+                        videoCompleted = true;
+                    });
+                }
+                else
+                {
+                    Debug.LogWarning("PhysicalDoor: 已啟用影片播放但未設置影片檔案或 URL！");
+                    videoCompleted = true; // 跳過影片播放
+                }
                 
                 // 等待影片播放完成
                 while (!videoCompleted)
@@ -439,10 +460,6 @@ public class PhysicalDoor : MonoBehaviour
             {
                 Debug.LogWarning("PhysicalDoor: 找不到 VideoPlayerController 實例！");
             }
-        }
-        else if (enableVideoPlayback && videoClip == null)
-        {
-            Debug.LogWarning("PhysicalDoor: 已啟用影片播放但未設置影片檔案！");
         }
     }
     
